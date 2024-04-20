@@ -10,7 +10,7 @@
 
 {% block 'body' %}
 
-
+{% include "partials/navbar.html" %}
     <div class="container">
 
         <br><br>
@@ -44,7 +44,7 @@
                 <p style="font-size: 25px" class="p-bold">Seus horários:</p>
                 <ul class="list-group">
                     {% for data in datas_abertas %}
-                    <li>{{data}}</li>
+                    <li>{{data.data | date:"d/m/Y H:i"}}</li>
                     {% endfor %}
                 </ul>
             </div>

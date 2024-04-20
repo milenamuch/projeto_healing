@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from medico.models import DatasAbertas, DadosMedico, Especialidades
+from medico.models import DatasAbertas, DadosMedico, Especialidades, is_medico
 from datetime import datetime
 from . models import Consulta
 from django.contrib import messages
@@ -18,7 +18,7 @@ def home(request):
             medicos = medicos.filter(especialidade_id__in = especialidades_filtrar)
 
         especialidades = Especialidades.objects.all()
-        return render(request, 'home.html',{'medicos': medicos, 'especialidades': especialidades})
+        return render(request, 'home.html',{'medicos': medicos, 'especialidades': especialidades,'is_medico': is_medico(request.user)})
     
 def escolher_horario(request,id_dados_medicos):
     if request.method == "GET":
@@ -28,7 +28,7 @@ def escolher_horario(request,id_dados_medicos):
             .filter(data__gte=datetime.now())\
             .filter(agendado=False)
         
-        return render(request,'escolher_horario.html', {'medico': medico, 'datas_abertas': datas_abertas})
+        return render(request,'escolher_horario.html', {'medico': medico, 'datas_abertas': datas_abertas,'is_medico': is_medico(request.user)})
 
 def agendar_horario(request, id_data_aberta):
     if request.method == "GET":
@@ -47,11 +47,20 @@ def agendar_horario(request, id_data_aberta):
         messages.add_message(request, constants.SUCCESS, 'Sua consulta foi agendada com sucesso')
         return redirect('/pacientes/minhas_consultas/')
         
-def minhas_consultas(request):
-
+def minhas_consultas(request):  
     #Fazer filtro de especialidade e de data aqui
     minhas_consultas = Consulta.objects\
         .filter(paciente = request.user)\
         .filter (data_aberta__data__gte=datetime.now())
 
-    return render(request, 'minhas_consultas.html', {'minhas_consultas': minhas_consultas})
+    return render(request, 'minhas_consultas.html', {'minhas_consultas': minhas_consultas,'is_medico': is_medico(request.user)})
+
+
+def consulta(request, id_consulta):
+    if request.method == 'GET':
+        consulta = Consulta.objects.get(id=id_consulta)
+        dado_medico = DadosMedico.objects.get(user=consulta.data_aberta.user)
+        return render(request, 'consulta.html', 
+                      {'consulta': consulta, 
+                       'dado_medico': dado_medico, 
+                       'is_medico': is_medico(request.user)})
