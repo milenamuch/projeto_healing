@@ -88,7 +88,7 @@ def consultas_medico(request):
     hoje = datetime.now().date()
     consultas_medico = Consulta.objects.filter(data_aberta__user=request.user)
     consultas_hoje = consultas_medico.filter(data_aberta__data__gte=hoje, data_aberta__data__lt=hoje + timedelta(days=1))
-    consultas_restantes = consultas_medico.exclude(data_aberta__data__gte=hoje, data_aberta__data__lt=hoje + timedelta(days=1))
+    consultas_restantes = consultas_medico.exclude(data_aberta__data__gte=hoje, data_aberta__data__lt=hoje + timedelta(days=1)).filter(data_aberta__user = request.user)
 
     return render(request, 'consultas_medico.html', {'consultas_hoje': consultas_hoje, 'consultas_restantes': consultas_restantes, 'is_medico': is_medico(request.user)})
 
@@ -101,7 +101,8 @@ def consulta_area_medico(request, id_consulta):
     
     if request.method == "GET":
         consulta = Consulta.objects.get(id = id_consulta)
-        return render(request, 'consulta_area_medico.html', {'consulta': consulta, 'is_medico': is_medico(request.user)})
+        documentos = Documento.objects.filter(consulta=consulta)
+        return render(request, 'consulta_area_medico.html', {'consulta': consulta, 'documentos': documentos,'is_medico': is_medico(request.user)})  
     
     elif request.method == "POST":
         consulta = Consulta.objects.get(id = id_consulta)
@@ -128,9 +129,9 @@ def finalizar_consulta(request, id_consulta):
     consulta = Consulta.objects.get(id = id_consulta)
     if request.user != consulta.data_aberta.user:
         messages.add_message(request, constants.ERROR, 'Esta consulta não é sua.')
-        return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+        return redirect(f'/medicos/abrir_horario/')
 
-    consulta.status == 'F'
+    consulta.status = 'F'
     consulta.save()
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
